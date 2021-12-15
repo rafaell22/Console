@@ -21,7 +21,61 @@
       return Object.prototype.toString.call(value).slice(8, -1); 
   }
   
+    function copyTouch({ identifier, pageX, pageY }) { 
+        return { identifier, pageX, pageY }; 
+    }
+    
+    function ongoingTouchIndexById(idToFind, touches) { 
+        for (let touchIndex = 0; touchIndex< touches.length; touchIndex++) {
+            const id = touches[i].identifier; 
+            if (id == idToFind) { 
+                return i; 
+            }
+        } 
+        return -1; // not found 
+    }
+    
+    function handleTouchStart(eventTouchStart) {
+        eventTouchStart.preventDefault();
+        eventTouchStart.stopPropagation();
+        if(!momentButtonWasPressed) {
+            momentButtonWasPressed = (new Date()).getTime();
+            previousTouch = eventTouchStart.changedTouches[0];
+            setTimeout(function () {
+                if(momentButtonWasPressed) {
+                    console.log('Lets drag!');
+                    btnOpenConsole.addEventListener('touchMove', handleTouchMove);
+                }
+            }, buttonPressThreshold);
+        }
+    }
+    function handleTouchMove(eventTouchMove) {
+        eventTouchMove.prefentDefault();
+        console.log('Moving...');
+urrentToconsole.log(eventTouchMove);
+        const currentTouchIndex = ongoingTouchIndexById(touchId, eventTouchMove.changedTouches);
+        
+        btnOpenConsole.top = eventTouchMove.changedTouches[currentTouchIndex].pageY;
+       btnOpenConsole.right = eventTouchMove.changedTouches[currentTouchIndex].pageX
+    }
+    function handleTouchEnd(eventTouchEnd) {
+        if(
+            momentButtonWasPressed &&
+            momentButtonWasPressed - (new Date()).getTime() < buttonPressThreshold
+        ) {
+            momentButtonWasPressed = null;
+            touchId = null;
+            document.querySelector('#debug').classList.remove('collapsed');
+            eventTouchEnd.target.classList.add('hidden');
+        }
+    }
+    function handleTouchCancel(eventTouchCancel) {}
+  
   const _console = {};
+  const buttonPressThreshold = 1000; // in ms
+  let momentButtonWasPressed = null;
+  let touchId = null;
+  let previousTouch = null;
   
   // the console components are appended directly to the body
   const body = document.getElementsByTagName('body')[0];
@@ -32,10 +86,17 @@
   btnOpenConsole.innerText = '?';
   body.appendChild(btnOpenConsole);
 
-  document.getElementById('debug-button').addEventListener('click', function(e) {
+  btnOpenConsole.addEventListener('touchStart', handleTouchStart);
+  
+  btnOpenConsole.addEventListener('touchEnd', function(e) {
+    
+  });
+
+  /* btnOpenConsole.addEventListener('click', function(e) {
     document.querySelector('#debug').classList.remove('collapsed');
     e.target.classList.add('hidden');
   });
+  */
   
   // add the console tab
   const tabOpenConsole = document.createElement('DIV');
@@ -69,7 +130,7 @@
     }, 1000);
   });
   
-  // event to clear the cobtent of the co.nsole tab
+  // event to clear the content of the console tab
   document.getElementById('tab-clear').addEventListener('click', function(e) {
     document.querySelector('#logging').innerHTML = '';
   });
