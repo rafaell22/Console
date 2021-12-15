@@ -1,0 +1,31 @@
+<html>
+  <header>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="../console.css">
+    <style>
+    </style>
+    
+    <script src="../console.js"></script>
+  </header>
+<body style="background-color: white !important;">
+  <script type="text/javascript">
+    console.log('String: ', 'Hello World!');
+    console.log('Number: ', 0);
+    console.log('Boolean: ', true);
+    console.log('Array: ', []);
+    console.log('Object: ', {});
+    console.log('Object: ', { a : 1});
+    console.log('Function: ', function() {});
+    console.log('Null: ', null);
+    console.log('Undefined: ', undefined);
+    
+    const divElement = document.createElement('DIV');
+    divElement.innerHTML = `
+      <p>Hello <b>World</b></p>
+    `;
+    console.log('HTML Element: ', divElement);
+    
+    console.log('Multiple arguments: ', divElement, null, undefined, 0, 0, true);
+  </script>
+</body>
+</html>

@@ -41,6 +41,10 @@
   user-select: none;
 }
 
+#debug-button.dragging {
+  border-color: #ff0000;
+}
+
 #debug.collapsed {
   height: 0px;
   overflow: hidden;
@@ -202,5 +206,10 @@
 
 #logging > .log > .boolean {
   background-color: #4aba91;
+  color: #ffffff;
+}
+
+#logging > .log > .html {
+  background-color: #dfa21a;
   color: #ffffff;
 }

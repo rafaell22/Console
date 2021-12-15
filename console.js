@@ -14,17 +14,47 @@
   factory(w);
 // Pass this if window is not defined yet
 } )(function(global){
-  "use strict";
+    "use strict";
+    
+    // function to get a value's raw type
+    /**
+     * Get a value's raw type
+     * @param  {any}      value  Value to be evaluated
+     * @return {string}          String representing the raw type of the value
+     */
+    function toRawType (value) { 
+        return Object.prototype.toString.call(value).slice(8, -1); 
+    }
+
+    const _console = {};
+    // Threshold to enable the user to drag the console button
+    const buttonPressThreshold = 500; // in ms
+    let momentButtonWasPressed = null;
+    let touchId = null;
+    
+    // add the button that opens the console
+    const btnOpenConsole = document.createElement('DIV');
+    
+    // the console components are appended directly to the body
+    const body = document.getElementsByTagName('body')[0];
   
-  // function to get a value's raw type
-  function toRawType (value) { 
-      return Object.prototype.toString.call(value).slice(8, -1); 
-  }
-  
+    /**
+     * Create a copy of the touch object (to break the references)
+     * @param  {string} identifier               Touch unique id
+     * @param  {number} pageX                    Position of the touch relative to the user's screen
+     * @param  {number} pageY                    Position of the touch relative to the user's screen
+     * @return {object}                          Copy of the touch object
+     */
     function copyTouch({ identifier, pageX, pageY }) { 
         return { identifier, pageX, pageY }; 
     }
     
+    /**
+     * Gets a touch from an array of touches, filtering by touch id
+     * @param  {string} idToFind               The id to find
+     * @param  {array}  touches                Array of touches (returned from a touch event)
+     * @return {number}                        Index of the touch in the array, or -1 if not found
+     */
     function ongoingTouchIndexById(idToFind, touches) { 
         for (let touchIndex = 0; touchIndex< touches.length; touchIndex++) {
             const id = touches[i].identifier; 
@@ -35,68 +65,92 @@
         return -1; // not found 
     }
     
+    /**
+     * Handle touchstart and mousedown events.
+     * @param  {object} eventTouchStart               Event properties
+     */
     function handleTouchStart(eventTouchStart) {
         eventTouchStart.preventDefault();
+        // prevents bubbling of event
         eventTouchStart.stopPropagation();
         if(!momentButtonWasPressed) {
+            // Save the time the user touched/clicked the button
             momentButtonWasPressed = (new Date()).getTime();
-            previousTouch = eventTouchStart.changedTouches[0];
+            
+            // Create a timeout to check if the user touches/clicks the button more then the threshold
             setTimeout(function () {
+                // We check if momentButtonWasPressed because this variable is cleared on touchend/mouseup
                 if(momentButtonWasPressed) {
-                    console.log('Lets drag!');
-                    btnOpenConsole.addEventListener('touchMove', handleTouchMove);
+                    // add events to the document instead of the button.
+                    // this is done to continue to drag the button even if the user moves too fast 
+                    // (and the event listener/dragging is not able to keep up)
+                    document.addEventListener('touchmove', handleTouchMove);
+                    document.addEventListener('mousemove', handleTouchMove);
+                    
+                    btnOpenConsole.classList.add('dragging');
                 }
             }, buttonPressThreshold);
         }
     }
+    
+    /**
+     * Handle touchmove and mousemove events.
+     * @param  {object} eventTouchMove               Event properties
+     */
     function handleTouchMove(eventTouchMove) {
-        eventTouchMove.prefentDefault();
-        console.log('Moving...');
-urrentToconsole.log(eventTouchMove);
-        const currentTouchIndex = ongoingTouchIndexById(touchId, eventTouchMove.changedTouches);
-        
-        btnOpenConsole.top = eventTouchMove.changedTouches[currentTouchIndex].pageY;
-       btnOpenConsole.right = eventTouchMove.changedTouches[currentTouchIndex].pageX
+        if (eventTouchMove.changedTouches) {
+            const currentTouchIndex = ongoingTouchIndexById(touchId, eventTouchMove.changedTouches);
+          
+            btnOpenConsole.top = eventTouchMove.changedTouches[currentTouchIndex].pageY;
+            btnOpenConsole.right = eventTouchMove.changedTouches[currentTouchIndex].pageX
+        } else {
+            btnOpenConsole.style.top = eventTouchMove.pageY - btnOpenConsole.getBoundingClientRect().height / 2;
+            btnOpenConsole.style.left = eventTouchMove.pageX - btnOpenConsole.getBoundingClientRect().width / 2;
+        }
     }
+    
+    /**
+     * Handle touchend and mouseup events.
+     * @param  {object} eventTouchEnd               Event properties
+     */
     function handleTouchEnd(eventTouchEnd) {
         if(
             momentButtonWasPressed &&
-            momentButtonWasPressed - (new Date()).getTime() < buttonPressThreshold
+            (new Date()).getTime() - momentButtonWasPressed < buttonPressThreshold
         ) {
-            momentButtonWasPressed = null;
-            touchId = null;
             document.querySelector('#debug').classList.remove('collapsed');
             eventTouchEnd.target.classList.add('hidden');
         }
+        btnOpenConsole.classList.remove('dragging');
+        momentButtonWasPressed = null;
+        touchId = null;
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('mousemove', handleTouchMove);
     }
-    function handleTouchCancel(eventTouchCancel) {}
+
+    /**
+     * Event to handle a touch cancel (for example when the user's finger drags to outside the element)
+     * @param  {[type]} eventTouchCancel               [description]
+     * @return {[type]}                  [description]
+     */
+    function handleTouchCancel(eventTouchCancel) {
+        momentButtonWasPressed = null;
+        touchId = null;
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('mousemove', handleTouchMove);
+    }
   
-  const _console = {};
-  const buttonPressThreshold = 1000; // in ms
-  let momentButtonWasPressed = null;
-  let touchId = null;
-  let previousTouch = null;
-  
-  // the console components are appended directly to the body
-  const body = document.getElementsByTagName('body')[0];
-  
-  // add the button that opens the console
-  const btnOpenConsole = document.createElement('DIV');
   btnOpenConsole.id = 'debug-button';
   btnOpenConsole.innerText = '?';
   body.appendChild(btnOpenConsole);
 
+  btnOpenConsole.addEventListener('mousedown', handleTouchStart);
   btnOpenConsole.addEventListener('touchStart', handleTouchStart);
   
-  btnOpenConsole.addEventListener('touchEnd', function(e) {
-    
-  });
+  btnOpenConsole.addEventListener('touchEnd', handleTouchEnd);
+  btnOpenConsole.addEventListener('mouseup', handleTouchEnd);
 
-  /* btnOpenConsole.addEventListener('click', function(e) {
-    document.querySelector('#debug').classList.remove('collapsed');
-    e.target.classList.add('hidden');
-  });
-  */
+  btnOpenConsole.addEventListener('touchcancel', handleTouchCancel);
   
   // add the console tab
   const tabOpenConsole = document.createElement('DIV');
@@ -135,6 +189,7 @@ urrentToconsole.log(eventTouchMove);
     document.querySelector('#logging').innerHTML = '';
   });
   
+  // Overwrite the window.console.log function
   _console.log = function() {
     let container = document.querySelector('#logging');
     let previousLog = container.querySelector('.last');
@@ -183,12 +238,17 @@ urrentToconsole.log(eventTouchMove);
           argsContent.textContent = arguments[argIndex];
           break;
         default:
+          if (argType.match(/HTML.*/)) {
+            argsContent.classList = 'variable html';
+            argsContent.textContent = arguments[argIndex].outerHTML;
+          }
       }
       newLog.appendChild(argsContent);
     }
     container.appendChild(newLog);
   }
   
+  // Overwrites the window.console.error funciton
   _console.error = function(err) {
     let container = document.querySelector('#logging');
     let previousLog = container.querySelector('.last');
