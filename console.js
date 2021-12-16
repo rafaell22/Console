@@ -33,7 +33,10 @@
     let touchId = null;
     
     // add the button that opens the console
-    const btnOpenConsole = document.createElement('DIV');
+    const btnOpenConsole = document.createElement('INPUT');
+    btnOpenConsole.type = 'button';
+    btnOpenConsole.id = 'debug-button';
+    btnOpenConsole.value = '?';
     
     // the console components are appended directly to the body
     const body = document.getElementsByTagName('body')[0];
@@ -57,9 +60,9 @@
      */
     function ongoingTouchIndexById(idToFind, touches) { 
         for (let touchIndex = 0; touchIndex< touches.length; touchIndex++) {
-            const id = touches[i].identifier; 
+            const id = touches[touchIndex].identifier; 
             if (id == idToFind) { 
-                return i; 
+                return touchIndex; 
             }
         } 
         return -1; // not found 
@@ -76,7 +79,9 @@
         if(!momentButtonWasPressed) {
             // Save the time the user touched/clicked the button
             momentButtonWasPressed = (new Date()).getTime();
-            
+            if(eventTouchStart.changedTouches) {
+                touchId = eventTouchStart.changedTouches[0].identifier;
+            }
             // Create a timeout to check if the user touches/clicks the button more then the threshold
             setTimeout(function () {
                 // We check if momentButtonWasPressed because this variable is cleared on touchend/mouseup
@@ -101,8 +106,8 @@
         if (eventTouchMove.changedTouches) {
             const currentTouchIndex = ongoingTouchIndexById(touchId, eventTouchMove.changedTouches);
           
-            btnOpenConsole.top = eventTouchMove.changedTouches[currentTouchIndex].pageY;
-            btnOpenConsole.right = eventTouchMove.changedTouches[currentTouchIndex].pageX
+            btnOpenConsole.style.top = eventTouchMove.changedTouches[currentTouchIndex].pageY;
+            btnOpenConsole.style.left = eventTouchMove.changedTouches[currentTouchIndex].pageX
         } else {
             btnOpenConsole.style.top = eventTouchMove.pageY - btnOpenConsole.getBoundingClientRect().height / 2;
             btnOpenConsole.style.left = eventTouchMove.pageX - btnOpenConsole.getBoundingClientRect().width / 2;
@@ -140,17 +145,17 @@
         document.removeEventListener('mousemove', handleTouchMove);
     }
   
-  btnOpenConsole.id = 'debug-button';
-  btnOpenConsole.innerText = '?';
   body.appendChild(btnOpenConsole);
 
   btnOpenConsole.addEventListener('mousedown', handleTouchStart);
-  btnOpenConsole.addEventListener('touchStart', handleTouchStart);
+  btnOpenConsole.addEventListener('touchstart', handleTouchStart);
   
-  btnOpenConsole.addEventListener('touchEnd', handleTouchEnd);
+  btnOpenConsole.addEventListener('touchend', handleTouchEnd);
   btnOpenConsole.addEventListener('mouseup', handleTouchEnd);
 
   btnOpenConsole.addEventListener('touchcancel', handleTouchCancel);
+
+
   
   // add the console tab
   const tabOpenConsole = document.createElement('DIV');
