@@ -1,7 +1,7 @@
 
 ( function(factory) {
   "use strict";
-  const version = '1.1.0';
+  const version = '1.2.0';
   let w;
   if (typeof window !== typeof void 0) {
     w = window;
@@ -155,7 +155,47 @@
 
   btnOpenConsole.addEventListener('touchcancel', handleTouchCancel);
 
+  const isNullOrUndefined = (value) => value === null || typeof value === typeof void 0;
 
+  const isIterable = (obj) => {
+    // checks for null and undefined
+    if (obj == null) {
+      return false;
+    }
+    return typeof obj[Symbol.iterator] === 'function';
+  }
+  
+  const getAttributes = (obj) => {
+      const attributes = {
+          own: [],
+           inherited: [],
+      };
+      if(typeof obj === 'Object') {
+          for(const attr in obj) {
+              if(obj.hasOwnProperty(attr)) {
+                  attributes.own.push({
+                      key: attr,
+                      value: obj[attr],
+                  });
+              } else {
+                  attributes.inherited.push({
+                      key: attr,
+                      value: obj[attr],
+                  })
+              }
+          }
+      }
+      
+      attributes.own.sort((a, b) => {
+          return a.key - b.key;
+      });
+      
+      attributes.inherited.sort((a, b) => {
+          return a.key - b.key;
+      });
+      
+      return attributes;
+  }
   
   // add the console tab
   const tabOpenConsole = document.createElement('DIV');
@@ -233,6 +273,19 @@
         case 'Object':
           argsContent.classList = 'variable object';
           argsContent.textContent = JSON.stringify(arguments[argIndex]);
+          const attrContent = document.createElement('DIV');
+          attrContent.classList = 'log';
+          let attrValue;
+          for(const attr in arguments[argIndex]) {
+              attrValue = document.createElement('DIV');
+              attrValue.innerHTML = `<span>${attr}: </span><span>${arguments[argIndex][attr]}</span>`;
+              attrContent.append(attrValue);
+          }
+          argsContent.addEventListener('click', (function(obj) {
+          
+		  }).bind(null));
+		
+		  newLog.append(attrContent);
           break;
         case 'Function':
           argsContent.classList = 'variable function';
@@ -253,7 +306,7 @@
     container.appendChild(newLog);
   }
   
-  // Overwrites the window.console.error funciton
+  // Overwrites the window.console.error function
   _console.error = function(err) {
     let container = document.querySelector('#logging');
     let previousLog = container.querySelector('.last');
