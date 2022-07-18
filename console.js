@@ -1,7 +1,7 @@
 
 ( function(factory) {
   "use strict";
-  const version = '1.1.0';
+  const version = '1.1.1';
   let w;
   if (typeof window !== typeof void 0) {
     w = window;
