@@ -6,7 +6,7 @@
   display: none;
 }
 
-.row {
+#debug .row {
   width: 100%;
   margin-bottom: 10px;
 }
