@@ -172,48 +172,69 @@
   border-radius: 50%;
 }
 
-#logging > .log > .variable {
+#logging > .log .variable {
   padding: 5px;
   border-radius: 5px;
   font-weight: bold;
 }
 
-#logging > .log > .undefined {
+#logging > .log .undefined {
   background-color: rgb(199, 199, 199);
   color: #000000;
 }
 
-#logging > .log > .null {
+#logging > .log .null {
   background-color: rgb(70, 70, 70);
   color: #ffffff;
 }
 
-#logging > .log > .number {
+#logging > .log .number {
   background-color: rgb(28, 88, 203);
   color: #ffffff;
 }
 
-#logging > .log > .array {
+#logging > .log .array {
   background-color: rgb(2, 172, 235);
   color: #ffffff;
 }
 
-#logging > .log > .object {
+#logging > .log .object {
   background-color: rgb(79, 12, 145);
   color: #ffffff;
 }
 
-#logging > .log > .function {
+#logging > .log .function {
   background-color: rgb(204, 2, 237);
   color: #ffffff;
 }
 
-#logging > .log > .boolean {
+#logging > .log .boolean {
   background-color: #4aba91;
   color: #ffffff;
 }
 
-#logging > .log > .html {
+#logging > .log .html {
   background-color: #dfa21a;
   color: #ffffff;
+}
+
+#logging > .log .variable-internal-values {
+  margin-left: 15px;
+  padding-left: 5px;
+  border-left: 1px dashed black;
+}
+
+#logging > .log .variable-inherited-values {
+  margin-left: 15px;
+  padding-left: 5px;
+  border-left: 1px dashed black;
+  background-color: #d9d9d9;
+}
+
+#logging > .log .variable-prototype-values {
+  margin-left: 15px;
+  padding-left: 5px;
+  border-left: 1px dashed black;
+  background-color: #d9d9d9;
+  opacity: 75%;
 }
