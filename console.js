@@ -1,7 +1,8 @@
 
 ( function(factory) {
   "use strict";
-  const version = '1.1.1';
+  const version = '1.2.0';
+
   let w;
   if (typeof window !== typeof void 0) {
     w = window;
@@ -155,7 +156,169 @@
 
   btnOpenConsole.addEventListener('touchcancel', handleTouchCancel);
 
+  const isNullOrUndefined = (value) => value === null || typeof value === typeof void 0;
 
+  const isIterable = (obj) => {
+    // checks for null and undefined
+    if (obj == null) {
+      return false;
+    }
+    return typeof obj[Symbol.iterator] === 'function';
+  }
+  
+  const getAttributes = (obj) => {
+      const attributes = {
+          own: [],
+          inherited: [],
+      };
+      if(toRawType(obj) === 'Object') {
+          for(const attr in obj) {
+              if(obj.hasOwnProperty(attr)) {
+                  attributes.own.push({
+                      key: attr,
+                      value: obj[attr],
+                  });
+              } else {
+                  attributes.inherited.push({
+                      key: attr,
+                      value: obj[attr],
+                  })
+              }
+          }
+      }
+      
+      attributes.own.sort((a, b) => {
+          return a.key - b.key;
+      });
+      
+      attributes.inherited.sort((a, b) => {
+          return a.key - b.key;
+      });
+      
+      return attributes;
+  }
+  
+  const getArgumentHtml = (arg) => {
+    const argsContent = document.createElement('SPAN');
+    const argType = toRawType(arg);
+    
+    // add specific styling depending of the value argument type
+    switch (argType) {
+      case 'Undefined':
+        argsContent.classList = 'variable undefined';
+        argsContent.textContent = 'undefined';
+        break;
+      case 'Null':
+        argsContent.classList = 'variable null';
+        argsContent.textContent = 'null';
+        break;
+      case 'String':
+          argsContent.textContent = arg;
+        break;
+      case 'Number':
+      argsContent.classList = 'variable number';  
+        argsContent.textContent = arg;
+        break;
+      case 'Array':
+        argsContent.classList = 'variable array';
+        argsContent.textContent = JSON.stringify(arg).trim(50);
+        
+        // TODO - add class with pointer style
+        argsContent.addEventListener('click', (function(arr, clickEvent) {
+          const parent = clickEvent.target.parentElement;
+          const pElements = parent.querySelectorAll(':scope > p');
+          
+          if (pElements.length > 0) {
+            for (const child of pElements) {
+              parent.removeChild(child);
+            }
+          } else {
+            let elAttr;
+            for(let valueIndex = 0; valueIndex < arr.length; valueIndex++) {
+              elAttr = document.createElement('p');
+              elAttr.classList = 'variable-internal-values'
+              elAttr.innerHTML = `${valueIndex}: `;
+              elAttr.appendChild(getArgumentHtml(arr[valueIndex]));
+              clickEvent.target.parentElement.appendChild(elAttr);
+            }
+            
+            const varPrototype = Object.getPrototypeOf(arg);
+            if (varPrototype) {
+              elAttr = document.createElement('p');
+              elAttr.classList = 'variable-prototype-values'
+              elAttr.innerHTML = `${varPrototype.constructor.name}: `;
+              elAttr.appendChild(getArgumentHtml(Object.getOwnPropertyNames(varPrototype).sort().reduce((properties, propertyName) => {
+                properties[propertyName] = varPrototype[propertyName];
+                return properties;
+              }, {})));
+              clickEvent.target.parentElement.appendChild(elAttr);
+            }
+          }
+        }).bind(null, arg));
+        
+        break;
+      case 'Object':
+        argsContent.classList = 'variable object';
+        argsContent.textContent = JSON.stringify(arg).trim(50);
+        argsContent.addEventListener('click', (function(obj, clickEvent) {
+          const parent = clickEvent.target.parentElement;
+          const pElements = parent.querySelectorAll(':scope > p');
+          
+          if (pElements.length > 0) {
+            for (const child of pElements) {
+              parent.removeChild(child);
+            }
+          } else {
+            const objAttributes = getAttributes(obj);
+            let elAttr;
+            for (const attr of objAttributes.own) {
+              elAttr = document.createElement('p');
+              elAttr.classList = 'variable-internal-values'
+              elAttr.innerHTML = `${attr.key}: `;
+              elAttr.appendChild(getArgumentHtml(attr.value));
+              clickEvent.target.parentElement.appendChild(elAttr);
+            }
+            
+            for (const attr of objAttributes.inherited) {
+              elAttr = document.createElement('p');
+              elAttr.classList = 'variable-inherited-values'
+              elAttr.innerHTML = `${attr.key}: `;
+              elAttr.appendChild(getArgumentHtml(attr.value));
+              clickEvent.target.parentElement.appendChild(elAttr);
+            }
+            
+            const varPrototype = Object.getPrototypeOf(arg);
+            if (varPrototype) {
+              elAttr = document.createElement('p');
+              elAttr.classList = 'variable-prototype-values'
+              elAttr.innerHTML = `${varPrototype.constructor.name}: `;
+              elAttr.appendChild(getArgumentHtml(Object.getOwnPropertyNames(varPrototype).reduce((properties, propertyName) => {
+                properties[propertyName] = varPrototype[propertyName];
+                return properties;
+              }, {})));
+              clickEvent.target.parentElement.appendChild(elAttr);
+            }
+          }
+        }).bind(null, arg));
+        break;
+      case 'Function':
+        argsContent.classList = 'variable function';
+        argsContent.textContent = arg;
+        break;
+      case 'Boolean':
+        argsContent.classList = 'variable boolean';
+        argsContent.textContent = arg;
+        break;
+      default:
+        if (argType.match(/HTML.*/)) {
+          argsContent.classList = 'variable html';
+          argsContent.textContent = arg.outerHTML;
+        }
+    }
+    
+    return argsContent;
+  };
+  
   
   // add the console tab
   const tabOpenConsole = document.createElement('DIV');
@@ -206,54 +369,12 @@
     newLog.classList.add('log');
     
     for(let argIndex = 0; argIndex < arguments.length; argIndex++) {
-      const argsContent = document.createElement('SPAN');
-      const argType = toRawType(arguments[argIndex]);
-      
-      // add specific styling depending of the value argument type
-      switch (argType) {
-        case 'Undefined':
-          argsContent.classList = 'variable undefined';
-          argsContent.textContent = 'undefined';
-          break;
-        case 'Null':
-          argsContent.classList = 'variable null';
-          argsContent.textContent = 'null';
-          break;
-        case 'String':
-            argsContent.textContent = arguments[argIndex];
-          break;
-        case 'Number':
-        argsContent.classList = 'variable number';  
-          argsContent.textContent = arguments[argIndex];
-          break;
-        case 'Array':
-          argsContent.classList = 'variable array';
-          argsContent.textContent = JSON.stringify(arguments[argIndex]);
-          break;
-        case 'Object':
-          argsContent.classList = 'variable object';
-          argsContent.textContent = JSON.stringify(arguments[argIndex]);
-          break;
-        case 'Function':
-          argsContent.classList = 'variable function';
-          argsContent.textContent = arguments[argIndex];
-          break;
-        case 'Boolean':
-          argsContent.classList = 'variable boolean';
-          argsContent.textContent = arguments[argIndex];
-          break;
-        default:
-          if (argType.match(/HTML.*/)) {
-            argsContent.classList = 'variable html';
-            argsContent.textContent = arguments[argIndex].outerHTML;
-          }
-      }
-      newLog.appendChild(argsContent);
+      newLog.appendChild(getArgumentHtml(arguments[argIndex]));
     }
     container.appendChild(newLog);
   }
   
-  // Overwrites the window.console.error funciton
+  // Overwrites the window.console.error function
   _console.error = function(err) {
     let container = document.querySelector('#logging');
     let previousLog = container.querySelector('.last');
@@ -305,8 +426,6 @@
 
   // add listener to the global unhandled rejection event. Intercepts and log errors to the console tab
   window.addEventListener('unhandledrejection', function(event) {
-      console.log(arguments)
-      console.log(event)
       event.preventDefault();
       var errorObject = {
         code: 'Unhandled Promise Rejection',
