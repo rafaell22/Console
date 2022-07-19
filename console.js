@@ -2,6 +2,7 @@
 ( function(factory) {
   "use strict";
   const version = '1.2.0';
+
   let w;
   if (typeof window !== typeof void 0) {
     w = window;
